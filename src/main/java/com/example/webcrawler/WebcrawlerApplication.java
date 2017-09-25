@@ -1,19 +1,19 @@
 package com.example.webcrawler;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.Executor;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import com.example.webcrawler.services.QueueProcessingService;
 
 @SpringBootApplication
 public class WebcrawlerApplication implements CommandLineRunner {
-
-    private static final Logger LOG = LoggerFactory.getLogger(WebcrawlerApplication.class);
 
     @Autowired
     QueueProcessingService queueProcessor;
@@ -35,4 +35,15 @@ public class WebcrawlerApplication implements CommandLineRunner {
         app.setBannerMode(Banner.Mode.OFF);
         app.run(args);
 	}
+	
+    @Bean
+    public Executor asyncExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(2);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("webcrawler-");
+        executor.initialize();
+        return executor;
+    }
 }

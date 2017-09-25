@@ -5,6 +5,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -12,6 +13,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
 
 import com.example.webcrawler.models.Link;
@@ -22,7 +25,8 @@ public class PageProcessingService {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(PageProcessingService.class);
 
-	public List<Link> processLink(Link link) throws IOException {
+	@Async
+	public Future<List<Link>> processLink(Link link) throws IOException {
 
 		LOG.debug("processLink link {} {}", link);
 
@@ -34,20 +38,16 @@ public class PageProcessingService {
 			Document doc = Jsoup.connect(url.toString()).get();
 			doc.setBaseUri(baseUrl);
 			
-			return processDoc(doc, link.getDepth());
+			return new AsyncResult<List<Link>>(processDoc(doc, link.getDepth()));
 		}
-		else {
-			List<Link> noLinks = new ArrayList<>();
-			return noLinks;
-		}
+		
+		return new AsyncResult<List<Link>>(new ArrayList<>());
 	}
 
 	public List<Link> processPage(String baseUrl, String content) {
 		
 		LOG.debug("processPage baseUrl {} content {}", baseUrl, content);
 		
-		List<Link> links = new ArrayList<>();
-
 		Document doc = Jsoup.parse(content);
 		doc.setBaseUri(baseUrl);
 		
